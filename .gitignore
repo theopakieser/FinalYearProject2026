@@ -1,0 +1,84 @@
+# === Python ===
+#Stores compiled python files for faster execution 
+__pycache__/
+#Compiled or optimised bytecode
+*.py[cod]
+*.pyo
+*.pyd
+#Compiled shared objects
+*.so
+
+# Virtual environments
+#Common python envs and variables that won't be pushed to git
+.env
+.venv
+env/
+venv/
+ENV/
+*.env
+*.env.*
+
+# Logs and databases
+#Temp runtime logs
+*.log
+#Local test databases
+*.sqlite3
+*.db
+#serialised python objects
+*.pkl
+
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupiter Notebook
+# Auto-saved notebook checkpoints
+.ipynb_checkpoints
+
+# Security
+# Private configs to avoid leaking credentials
+secrets.json
+config.json
+*.key
+*.pem
+*.crt
+*.der
+
+# Forensic Test Data - keep local
+# Disk images
+*.img
+*.dd
+*.E01
+# Raw memory dumps
+*.bin
+*.raw
+*.dump
+# Network packet captures
+*.pcap
+
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-generated files
+.DS_Store
+Thumbs.db
