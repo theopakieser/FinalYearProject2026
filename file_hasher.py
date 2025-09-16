@@ -21,8 +21,8 @@ def calculate_hash(file_path, algorithm='sha256'):
 
 def main(): 
     #prompt user to enter a file and an algorithm
-    file_path = input("Enter the file path: ")
-    algorithm = input("Enter hash algorithm desired: ")
+    file_path = input("Enter the file path: ").strip()
+    algorithm = input("Enter hash algorithm desired: ").lower().replace("-", "")
 
     try:
         #calls function to calculate the hash of the file 
