@@ -8,8 +8,11 @@
 from .utils import calculate_hash
 import os
 
-def scan_folder(folder_path: str):
-    #Return list of files in a given folder
-    return [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+def scan_folder(file_path: str):
+    f = []
+    for dirpath, dirnames, filenames in os.walk(file_path):
+        for filename in filenames:  # loop each file, not the list
+            f.append(os.path.join(dirpath, filename))
+    return f
 
 
