@@ -1,4 +1,7 @@
-#Save and load JSON
+# File: manifest.py
+# Description: Save and Delete Json
+# Author: Theo Pakieser
+# Date: 22/10/2025
 
 import json
 import os
