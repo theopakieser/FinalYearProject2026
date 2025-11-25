@@ -27,3 +27,21 @@ def create_baseline(folder, output_path = "baseline.json"):
     save(hash_data, output_path)
     print(f"Saved to {output_path}!")
 
+def main():
+    #CLI entry point
+    parser =argparse.ArgumentParser(description="Lightweight File Integrity Checked")
+    parser.add_argument("path", help="Path to folder")
+    #baseline flag to turn on baseline creation
+    parser.add_argument("--create-baseline", action="store_true", help="Create baseline manifest from folder")
+    #parse input
+    args =parser.parse_args()
+    
+    #handle commands
+    if args.create_baseline:
+        create_baseline(args.path)
+    else:
+        print("Use --create-baseline to generate a baseline please")
+
+#let main run
+if __name__ == "__main__":
+    main()
