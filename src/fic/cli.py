@@ -11,6 +11,7 @@ import os #checking files/folders and working with paths
 from .scanner import generate_hashes
 from .manifest import save
 
+
 #create baseline
 def create_baseline(folder, output_path = "baseline.json"):
     #scans folder and saves file to baseline.json
@@ -18,6 +19,7 @@ def create_baseline(folder, output_path = "baseline.json"):
     #check if folder exists
     if not os.path.exists(folder):
         print("Please enter a valid folder")
+        return
 
     #run scanner
     print(f"Scanning..... {folder}")
@@ -29,10 +31,14 @@ def create_baseline(folder, output_path = "baseline.json"):
 
 def main():
     #CLI entry point
-    parser =argparse.ArgumentParser(description="Lightweight File Integrity Checked")
+    parser =argparse.ArgumentParser(description="VeriLite")
     parser.add_argument("path", help="Path to folder")
     #baseline flag to turn on baseline creation
     parser.add_argument("--create-baseline", action="store_true", help="Create baseline manifest from folder")
+    
+    #output file name
+    parser.add_argument("--output", default="baseline.json", help="Output to baseline filename (default: baseline.json)")
+
     #parse input
     args =parser.parse_args()
     
