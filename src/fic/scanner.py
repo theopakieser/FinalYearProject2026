@@ -7,6 +7,8 @@
 #Imports
 from .utils import calculate_hash
 import os
+import traceback
+
 
 
 def scan_folder(file_path: str):
@@ -23,7 +25,8 @@ def generate_hashes(folder_path:str):
             file_path = os.path.join(dirpath, filename) # joins path and name into one full path string
             try: 
                 file_hash = calculate_hash(file_path) #read file in chunks
-                hash_data = [file_path] = file_hash #stores hash in dictionary under full file path key
-            except Exception as e: #exception handling
-                print ( "Error hashing file path :(")
+                hash_data[file_path] = file_hash #stores hash in dictionary under full file path key
+            except Exception: #exception handling
+                traceback.print_exc()
+
     return hash_data

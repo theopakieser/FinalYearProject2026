@@ -15,7 +15,10 @@ def calculate_hash(file_path, algorithm='sha256'):
     #opens file in binary mode
     with open(file_path, 'rb') as file:
         #reads the file in chucks of 8192 bytes, useful for large files 
-        while chunk := file.read(8192):
+        while True:
+            chunk = file.read(8192)
+            if not chunk:
+                break
             #updates object with each chunk of data
             hash_function.update(chunk)
 
