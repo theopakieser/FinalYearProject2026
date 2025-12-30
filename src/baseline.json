@@ -1,6 +1,0 @@
-{
-    "../tests/test_files\\secret.docx": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "../tests/test_files\\test1.txt": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-    "../tests/test_files\\test2.txt": "5881707e54b0112f901bc83a1ffbacac8fab74ea46a6f706a3efc5f7d4c1c625",
-    "../tests/test_files\\testfolder1\\test3.txt": "8437738b44cb1213e5fba4da88b5618a3c15aed0f334679639fa5e2f13e9cf8d"
-}
