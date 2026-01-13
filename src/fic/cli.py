@@ -6,6 +6,7 @@
 #imports
 import argparse #parsing cmd line args
 import os #checking files/folders and working with paths
+from pathlib import Path
 
 #custom modules from code already written
 from .scanner import generate_hashes
@@ -36,9 +37,7 @@ def verify(folder, baseline_path="baseline.json"):
         print("Please enter a valid folder")
         return
     
-    baseline = load(baseline_path) #loads baseline into python dictionary
-    if baseline is None:
-        return
+    baseline = load(Path(baseline_path)) #loads baseline into python dictionary
     
     print(f"Scanning....... {folder}")
     current = generate_hashes(folder) #runs scanner again on folder to return a new dictionary
@@ -96,6 +95,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    #gaurd against invalid flag combination
+    if args.create_baseline and args.verify:
+        print("ERROR: Please choose either --create-baseline or --verify, not both")
+        return
 
     if args.create_baseline:
         create_baseline(args.path, args.output)
