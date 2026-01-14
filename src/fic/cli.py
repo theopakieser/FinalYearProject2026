@@ -12,6 +12,7 @@ from pathlib import Path
 from .scanner import generate_hashes
 from .manifest import save, load
 from .compare import compare_manifests
+from .utils import to_hex_string
 
 
 #create baseline
@@ -51,8 +52,12 @@ def verify(folder, baseline_path="baseline.json"):
         print("\n[MODIFIED FILES]") #header
         for path, hashes in modified.items(): #loop
             print(f"\nFile: {path}") #print modified file paths
+            
             print(f"Baseline Hash: {hashes['baseline']}")
             print(f"Current Hash: {hashes['current']}")
+
+            print(f"Baseline Hex: {to_hex_string(hashes['baseline'])}")
+            print(f"Current Hex: {to_hex_string(hashes['current'])}")
     if added:
         print("\n[ADDED FILES]")
         for path in added:

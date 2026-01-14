@@ -42,3 +42,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def to_hex_string(hash_str: str) -> str:
+    """
+    Formats a hexidecimal hash string into byte-paired groups
+    for improved readability
+    """
+    return " ".join(hash_str[i:i+2] for i in range(0, len(hash_str), 2))
