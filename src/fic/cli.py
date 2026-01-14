@@ -49,8 +49,10 @@ def verify(folder, baseline_path="baseline.json"):
 
     if modified: #if list has been modified
         print("\n[MODIFIED FILES]") #header
-        for path in modified: #loop
-            print(path) #print modified file paths
+        for path, hashes in modified.items(): #loop
+            print(f"\nFile: {path}") #print modified file paths
+            print(f"Baseline Hash: {hashes['baseline']}")
+            print(f"Current Hash: {hashes['current']}")
     if added:
         print("\n[ADDED FILES]")
         for path in added:

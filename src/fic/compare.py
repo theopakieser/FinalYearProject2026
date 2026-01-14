@@ -17,8 +17,9 @@ def compare_manifests(
     
     Returns:
     - Modified: files present in both but with different hashes
+    {path: {"baseline": <hash>, "current": <hash>}}
     - Added: files present only in current
-    - Deleted: files present onlt in baseline
+    - Deleted: files present only in baseline
     """ #docstring
 
     baseline_paths = set(baseline.keys()) #gives all file paths in baseline and converts to set
@@ -34,9 +35,17 @@ def compare_manifests(
 
     #changed files
     common = baseline_paths & current_paths #sets intersection - what they have in common
-    modified = sorted( #builds sorted list of modified files
-        path for path in common #loop each path that is in both
-        if baseline[path] != current[path] #if hash in base is different to the one in the current scan, flag as modified 
-    )
+    modified = {} #stores modified files with hash details
+    for path in common: #loop through files that exist in current and baseline
+        baseline_hash = baseline[path]
+        current_hash = current[path]
 
-    return modified, added, deleted #return lists in order
+        #if hashes are different, modified
+        if baseline_hash != current_hash:
+            modified[path] = {
+                "baseline":baseline_hash,
+                "current":current_hash
+            }
+
+
+    return modified, added, deleted #return lists in orders
