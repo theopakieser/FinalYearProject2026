@@ -8,6 +8,7 @@ import argparse #parsing cmd line args
 import os #checking files/folders and working with paths
 from pathlib import Path
 import time
+import sys
 
 #custom modules from code already written
 from .scanner import generate_hashes
@@ -40,7 +41,9 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
         return
     
     baseline = load(Path(baseline_path)) #loads baseline into python dictionary
-    
+    print(f"Using baseline: {baseline_path} (verified)")
+
+    integrity_violated = False
     try:
         while True:
             print(f"Scanning....... {folder}")
@@ -73,6 +76,7 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
                 print("\nNo changes detected")
                 log_event("No changes detected")
             else: 
+                integrity_violated = True
                 log_event(
                     f"Modified: {len(modified)} Added: {len(added)} Deleted: {len(deleted)}"
             )
@@ -86,6 +90,12 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
     except  KeyboardInterrupt:
         print("\nMonitoring stopped by user")
         log_event("Monintoring stopped by user (Ctrl+C)")
+
+        if not watch:
+            if integrity_violated:
+                sys.exit(1)
+            else:
+                sys.exit(0)
 
 
 
