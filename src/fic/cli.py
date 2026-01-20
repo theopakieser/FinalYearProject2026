@@ -41,46 +41,52 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
     
     baseline = load(Path(baseline_path)) #loads baseline into python dictionary
     
-    while True:
-        print(f"Scanning....... {folder}")
-        current = generate_hashes(folder) #runs scanner again on folder to return a new dictionary
+    try:
+        while True:
+            print(f"Scanning....... {folder}")
+            current = generate_hashes(folder) #runs scanner again on folder to return a new dictionary
 
-        modified, added, deleted = compare_manifests(baseline, current) 
-        #compared dictionaries with the help of comapare.py
+            modified, added, deleted = compare_manifests(baseline, current) 
+            #compared dictionaries with the help of comapare.py
 
-        print("\n=== Integrity Verification Report ===") #report header
+            print("\n=== Integrity Verification Report ===") #report header
 
-        if modified: #if list has been modified
-            print("\n[MODIFIED FILES]") #header
-            for path, hashes in modified.items(): #loop
-                print(f"\nFile: {path}") #print modified file paths
+            if modified: #if list has been modified
+                print("\n[MODIFIED FILES]") #header
+                for path, hashes in modified.items(): #loop
+                    print(f"\nFile: {path}") #print modified file paths
             
-                print(f"Baseline Hash: {hashes['baseline']}")
-                print(f"Current Hash: {hashes['current']}")
+                    print(f"Baseline Hash: {hashes['baseline']}")
+                    print(f"Current Hash: {hashes['current']}")
 
-                print(f"Baseline Hex: {to_hex_string(hashes['baseline'])}")
-                print(f"Current Hex: {to_hex_string(hashes['current'])}")
-        if added:
-            print("\n[ADDED FILES]")
-            for path in added:
-                print(path)
-        if deleted:
-            print("\n[DELETED FILES]")
-            for path in deleted:
-                print(path)
-        if not modified and not added and not deleted:
-            print("\nNo changes detected")
-            log_event("No changes detected")
-        else: 
-            log_event(
-                f"Modified: {len(modified)} Added: {len(added)} Deleted: {len(deleted)}"
+                    print(f"Baseline Hex: {to_hex_string(hashes['baseline'])}")
+                    print(f"Current Hex: {to_hex_string(hashes['current'])}")
+            if added:
+                print("\n[ADDED FILES]")
+                for path in added:
+                    print(path)
+            if deleted:
+                print("\n[DELETED FILES]")
+                for path in deleted:
+                    print(path)
+            if not modified and not added and not deleted:
+                print("\nNo changes detected")
+                log_event("No changes detected")
+            else: 
+                log_event(
+                    f"Modified: {len(modified)} Added: {len(added)} Deleted: {len(deleted)}"
             )
         
-        if not watch: 
-            break
+            if not watch: 
+                break
         
-        print(f"\nWaiting {interval} seconds before next scan....")
-        time.sleep(interval)
+            print(f"\nWaiting {interval} seconds before next scan....")
+            time.sleep(interval)
+        
+    except  KeyboardInterrupt:
+        print("\nMonitoring stopped by user")
+        log_event("Monintoring stopped by user (Ctrl+C)")
+
 
 
 def main():
