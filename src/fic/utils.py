@@ -6,6 +6,7 @@
 
 #Imports
 import hashlib
+from datetime import datetime
 
 #Calculate the hash of a given file
 def calculate_hash(file_path, algorithm='sha256'):
@@ -49,3 +50,8 @@ def to_hex_string(hash_str: str) -> str:
     for improved readability
     """
     return " ".join(hash_str[i:i+2] for i in range(0, len(hash_str), 2))
+
+def log_event(message, log_file="verilite.log"):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(log_file, "a") as f:
+        f.write(f"{timestamp} | {message}")

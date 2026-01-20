@@ -13,7 +13,7 @@ import time
 from .scanner import generate_hashes
 from .manifest import save, load
 from .compare import compare_manifests
-from .utils import to_hex_string
+from .utils import to_hex_string, log_event
 
 
 #create baseline
@@ -70,6 +70,11 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
                 print(path)
         if not modified and not added and not deleted:
             print("\nNo changes detected")
+            log_event("No changes detected")
+        else: 
+            log_event(
+                f"Modified: {len(modified)} Added: {len(added)} Deleted: {len(deleted)}"
+            )
         
         if not watch: 
             break
