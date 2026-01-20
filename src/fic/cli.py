@@ -7,6 +7,7 @@
 import argparse #parsing cmd line args
 import os #checking files/folders and working with paths
 from pathlib import Path
+import time
 
 #custom modules from code already written
 from .scanner import generate_hashes
@@ -33,41 +34,48 @@ def create_baseline(folder, output_path = "baseline.json"):
     print(f"Saved to {output_path}!")
 
 
-def verify(folder, baseline_path="baseline.json"):
+def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
     if not os.path.exists(folder): #check if folder exists
         print("Please enter a valid folder")
         return
     
     baseline = load(Path(baseline_path)) #loads baseline into python dictionary
     
-    print(f"Scanning....... {folder}")
-    current = generate_hashes(folder) #runs scanner again on folder to return a new dictionary
+    while True:
+        print(f"Scanning....... {folder}")
+        current = generate_hashes(folder) #runs scanner again on folder to return a new dictionary
 
-    modified, added, deleted = compare_manifests(baseline, current) 
-    #compared dictionaries with the help of comapare.py
+        modified, added, deleted = compare_manifests(baseline, current) 
+        #compared dictionaries with the help of comapare.py
 
-    print("\n=== Integrity Verification Report ===") #report header
+        print("\n=== Integrity Verification Report ===") #report header
 
-    if modified: #if list has been modified
-        print("\n[MODIFIED FILES]") #header
-        for path, hashes in modified.items(): #loop
-            print(f"\nFile: {path}") #print modified file paths
+        if modified: #if list has been modified
+            print("\n[MODIFIED FILES]") #header
+            for path, hashes in modified.items(): #loop
+                print(f"\nFile: {path}") #print modified file paths
             
-            print(f"Baseline Hash: {hashes['baseline']}")
-            print(f"Current Hash: {hashes['current']}")
+                print(f"Baseline Hash: {hashes['baseline']}")
+                print(f"Current Hash: {hashes['current']}")
 
-            print(f"Baseline Hex: {to_hex_string(hashes['baseline'])}")
-            print(f"Current Hex: {to_hex_string(hashes['current'])}")
-    if added:
-        print("\n[ADDED FILES]")
-        for path in added:
-            print(path)
-    if deleted:
-        print("\n[DELETED FILES]")
-        for path in deleted:
-            print(path)
-    if not modified and not added and not deleted:
-        print("\nNo changes detected")
+                print(f"Baseline Hex: {to_hex_string(hashes['baseline'])}")
+                print(f"Current Hex: {to_hex_string(hashes['current'])}")
+        if added:
+            print("\n[ADDED FILES]")
+            for path in added:
+                print(path)
+        if deleted:
+            print("\n[DELETED FILES]")
+            for path in deleted:
+                print(path)
+        if not modified and not added and not deleted:
+            print("\nNo changes detected")
+        
+        if not watch: 
+            break
+        
+        print(f"\nWaiting {interval} seconds before next scan....")
+        time.sleep(interval)
 
 
 def main():
@@ -101,6 +109,19 @@ def main():
         help="Output baseline filename (default: baseline.json)"
     )
 
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help = "Continuously monitor directory for integrity changes"
+    )
+
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=60,
+        help="Time between scans in seconds (default: 60)"
+    )
+
     args = parser.parse_args()
 
     #gaurd against invalid flag combination
@@ -111,7 +132,7 @@ def main():
     if args.create_baseline:
         create_baseline(args.path, args.output)
     elif args.verify:
-        verify(args.path, args.baseline)
+        verify(args.path, args.baseline, watch=args.watch, interval=args.interval)
     else:
         print("Use --create-baseline or --verify")
 
