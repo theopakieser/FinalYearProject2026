@@ -44,7 +44,7 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
         print("Please enter a valid folder")
         return
     
-    baseline = load(Path(baseline_path, algorithm)) #loads baseline into python dictionary
+    baseline = load(baseline_path, algorithm) #loads baseline into python dictionary
     print(f"Using baseline: {baseline_path} (verified)")
 
     print(f"Hash algorithm in use: {algorithm.upper()}")
