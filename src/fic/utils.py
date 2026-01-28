@@ -9,7 +9,7 @@ import hashlib
 from datetime import datetime
 
 #Calculate the hash of a given file
-def calculate_hash(file_path, algorithm='sha256'):
+def calculate_hash(file_path, algorithm:str):
     """Calculate hash of file using a specificed algorithm."""
     hash_function = hashlib.new(algorithm)
 
@@ -41,8 +41,6 @@ def main():
     except ValueError:
         print("Invalid hash algorithm: {algorithim}. Please enter a valid algorithm")
 
-if __name__ == "__main__":
-    main()
 
 def to_hex_string(hash_str: str) -> str:
     """

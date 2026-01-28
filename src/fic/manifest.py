@@ -7,12 +7,12 @@ import json
 import os
 import sys #terminate program safely
 from pathlib import Path #cross platform file path handling
-from fic.utils import calculate_hash
+from .utils import calculate_hash
 
 BASELINE_FILE = "baseline.json"
 SIGNATURE_FILE = "baseline.sig"
 
-def save(data, output_path=BASELINE_FILE):
+def save(data, output_path:str, algorithm: str):
     """
   Saves the baseline manifest and generated a cryptographic signature
   to make any baseline tampering detectable
@@ -25,7 +25,7 @@ def save(data, output_path=BASELINE_FILE):
         json.dump(data, f, indent=4)
 
     #calculate hash of stored baseline file
-    sig = calculate_hash(output_path)
+    sig = calculate_hash(output_path, algorithm)
     #creat path for signature file
     sig_path = output_path.with_suffix(".sig")
 
@@ -35,7 +35,7 @@ def save(data, output_path=BASELINE_FILE):
 
     print("Baseline has been saved and signed successfully")
 
-def verify_signature(baseline_path: Path):
+def verify_signature(baseline_path: Path, algorithm: str):
     """
     Verfies integrity of the baseline file
     If verification fails, program is terminated immediately
@@ -53,7 +53,7 @@ def verify_signature(baseline_path: Path):
     stored_sig = sig_path.read_text().strip()
 
     #hash the current baseline again
-    current_sig = calculate_hash(baseline_path)
+    current_sig = calculate_hash(baseline_path, algorithm)
 
     #compare hashes
     if stored_sig != current_sig:
@@ -62,7 +62,7 @@ def verify_signature(baseline_path: Path):
 
 
 
-def load(path=BASELINE_FILE):
+def load(path:str, algorithm:str):
     """
     Loads basline manifest only after verifying its integrity
     Returns trusted baseline data or terminates immediately
@@ -75,7 +75,7 @@ def load(path=BASELINE_FILE):
         sys.exit(1)
 
     #terminate if tampering is detected
-    verify_signature(baseline_path)
+    verify_signature(baseline_path, algorithm)
 
     #load trusted baseline
     with open(baseline_path, "r", encoding="utf-8") as f:

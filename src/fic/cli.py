@@ -16,9 +16,11 @@ from .manifest import save, load
 from .compare import compare_manifests
 from .utils import to_hex_string, log_event
 
+SUPPORTED_HASHES = ["sha256", "md5", "sha1"]
+
 
 #create baseline
-def create_baseline(folder, output_path = "baseline.json"):
+def create_baseline(folder, output_path = "baseline.json", algorithm="sha256"):
     #scans folder and saves file to baseline.json
 
     #check if folder exists
@@ -28,26 +30,31 @@ def create_baseline(folder, output_path = "baseline.json"):
 
     #run scanner
     print(f"Scanning..... {folder}")
-    hash_data = generate_hashes(folder) #will return file path and hash
+    print(f"Hash algorithm in use: {algorithm.upper()}")
+    log_event(f"Hash algorithm in use: {algorithm}")
+    hash_data = generate_hashes(folder, algorithm) #will return file path and hash
 
     #save generated output
-    save(hash_data, output_path)
+    save(hash_data, output_path, algorithm)
     print(f"Saved to {output_path}!")
 
 
-def verify(folder, baseline_path="baseline.json", watch=False, interval=60):
+def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algorithm="sha256"):
     if not os.path.exists(folder): #check if folder exists
         print("Please enter a valid folder")
         return
     
-    baseline = load(Path(baseline_path)) #loads baseline into python dictionary
+    baseline = load(Path(baseline_path, algorithm)) #loads baseline into python dictionary
     print(f"Using baseline: {baseline_path} (verified)")
+
+    print(f"Hash algorithm in use: {algorithm.upper()}")
+    log_event(f"Hash algorithm in use: {algorithm}")
 
     integrity_violated = False
     try:
         while True:
             print(f"Scanning....... {folder}")
-            current = generate_hashes(folder) #runs scanner again on folder to return a new dictionary
+            current = generate_hashes(folder, algorithm) #runs scanner again on folder to return a new dictionary
 
             modified, added, deleted = compare_manifests(baseline, current) 
             #compared dictionaries with the help of comapare.py
@@ -143,6 +150,15 @@ def main():
         help="Time between scans in seconds (default: 60)"
     )
 
+    parser.add_argument(
+    "--hash",
+    dest="hash_algo",
+    choices=SUPPORTED_HASHES,
+    default="sha256",
+    help="Hash algorithm to use (default: sha256). md5 and sha1 are legacy."
+)
+
+
     args = parser.parse_args()
 
     #gaurd against invalid flag combination
@@ -151,9 +167,9 @@ def main():
         return
 
     if args.create_baseline:
-        create_baseline(args.path, args.output)
+        create_baseline(args.path, args.output, algorithm=args.hash_algo)
     elif args.verify:
-        verify(args.path, args.baseline, watch=args.watch, interval=args.interval)
+        verify(args.path, args.baseline, watch=args.watch, interval=args.interval, algorithm=args.hash_algo)
     else:
         print("Use --create-baseline or --verify")
 
