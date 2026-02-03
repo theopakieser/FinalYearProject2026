@@ -1,16 +1,13 @@
 # File: manifest.py
-# Description: Save and Delete Json
+# Description: Save and Load Json, Verify Baseline Signatures
 # Author: Theo Pakieser
 # Date: 22/10/2025
 
 import json
-import os
 import sys #terminate program safely
 from pathlib import Path #cross platform file path handling
 from .utils import calculate_hash
 
-BASELINE_FILE = "baseline.json"
-SIGNATURE_FILE = "baseline.sig"
 
 def save(data, output_path:str, algorithm: str):
     """
@@ -22,7 +19,7 @@ def save(data, output_path:str, algorithm: str):
 
     #writes baseline with UTF-8 encoding
     with open(output_path, "w", encoding = "utf-8") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4, sort_keys=True, ensure_ascii=False)
 
     #calculate hash of stored baseline file
     sig = calculate_hash(output_path, algorithm)
