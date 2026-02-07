@@ -70,8 +70,12 @@ def build_file_record(file_path: Path, base_root: Path, snapshot_root: Path, alg
 
     record = {
         "path": str(file_path.relative_to(base_root)),
+        "ext": file_path.suffix.lower(),
         "size": stat.st_size,
         "mtime": int(stat.st_mtime),
+        "ctime": int(getattr(stat, "st_mode", 0)),
+        "mode": int(getattr(stat, "st_mode", 0)),
+        "is_symlink": calculate_hash(str(file_path), algorithm),
         "raw_hash": calculate_hash(file_path, algorithm),
         "text": None
     }
@@ -128,7 +132,7 @@ def build_baseline(base_dir: str, algorithm: str, baseline_path: str = "baseline
             traceback.print_exc()
 
     baseline = {
-        "schema_version": 2,
+        "schema_version": 3,
         "algorithm": algorithm,
         "base_dir": str(base_root),
         "snapshot_dir": str(snapshot_root),
