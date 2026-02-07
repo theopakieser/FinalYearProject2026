@@ -3,12 +3,12 @@
     "base_dir": "C:\\Users\\test\\OneDrive - South East Technological University (Waterford Campus)\\FinalYearProject\\FileIntegrityChecker\\docs\\evaluation\\test_files\\tamper_test",
     "files": [
         {
-            "mtime": 1769684881,
+            "mtime": 1770500217,
             "path": "evidence.txt",
-            "raw_hash": "bacb99aa39af44a1c53b5a708d895c215c8955203464b7821b488d95d275a811",
-            "size": 23,
+            "raw_hash": "edaf2e03f91e8cbc7ab150741cffca61edcc721bca3ee23a7267bc8a1b0d79f3",
+            "size": 45,
             "text": {
-                "hash": "59071d40b67996368b6c251c0a22bc8b4453775e319f61f66a61ccc7a3964c3c",
+                "hash": "cebcfd2aba20ae2082dca5e59e9de84285965dd77881b6533f76a68a76b9f2ef",
                 "kind": "text",
                 "snapshot": "evidence.txt.txt"
             }
@@ -23,6 +23,13 @@
                 "kind": "text",
                 "snapshot": "hashlist.csv.txt"
             }
+        },
+        {
+            "mtime": 1770500319,
+            "path": "more_evidence.pdf",
+            "raw_hash": "b059810403697f2ff118e019e76412291b5f621917a729c9e5fa3658c823bbfd",
+            "size": 33,
+            "text": null
         },
         {
             "mtime": 1769599253,
