@@ -1,0 +1,41 @@
+{
+    "algorithm": "sha256",
+    "base_dir": "C:\\Users\\test\\OneDrive - South East Technological University (Waterford Campus)\\FinalYearProject\\FileIntegrityChecker\\docs\\evaluation\\test_files\\tamper_test",
+    "files": [
+        {
+            "mtime": 1769684881,
+            "path": "evidence.txt",
+            "raw_hash": "bacb99aa39af44a1c53b5a708d895c215c8955203464b7821b488d95d275a811",
+            "size": 23,
+            "text": {
+                "hash": "59071d40b67996368b6c251c0a22bc8b4453775e319f61f66a61ccc7a3964c3c",
+                "kind": "text",
+                "snapshot": "evidence.txt.txt"
+            }
+        },
+        {
+            "mtime": 1769594052,
+            "path": "hashlist.csv",
+            "raw_hash": "e775b9cb13100091b6c8b275363c30ddbaf7cd042e939120ad76abddde14c045",
+            "size": 155,
+            "text": {
+                "hash": "73da53b045f3137977208d7bcb48dfc5dad3d69993994d0ce4d4170355093c05",
+                "kind": "text",
+                "snapshot": "hashlist.csv.txt"
+            }
+        },
+        {
+            "mtime": 1769599253,
+            "path": "new_file.txt",
+            "raw_hash": "6062c82e2a7d30b7ff3ddda570c1584c498ef656fc6e68b0d14b7b06db51833d",
+            "size": 18,
+            "text": {
+                "hash": "5f24fe9347bd2c3c072fe739f2ec2c9a98aad6c3d6dc689dc6a0dcca94a264dc",
+                "kind": "text",
+                "snapshot": "new_file.txt.txt"
+            }
+        }
+    ],
+    "schema_version": 2,
+    "snapshot_dir": "C:\\Users\\test\\OneDrive - South East Technological University (Waterford Campus)\\FinalYearProject\\FileIntegrityChecker\\src\\snapshots"
+}
