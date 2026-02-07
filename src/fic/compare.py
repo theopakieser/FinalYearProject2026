@@ -106,7 +106,31 @@ def compare_baselines(
                 text_note = "text_unavailable_now"
             else:
                 text_changed = (b_text.get("hash") != c_text.get("hash"))
+    chunk_info = None
 
+    if b_text is not None and c_text is not None:
+        b_chunks = b_text.get("chunks")
+        c_chunks = c_text.get("chunks")
+
+        if isinstance(b_chunks, list) and isinstance(c_chunks, list):
+            b_set = set(b_chunks)
+            c_set = set(c_chunks)
+
+            removed = len(b_set - c_set)
+            added_chunks = len(c_set - b_set)
+
+            total = max(len(b_chunks), 1)
+            changed = removed
+
+            chunk_info = {
+                "total_baseline": len(b_chunks),
+                "total_current": len(c_chunks),
+                "removed": removed,
+                "added": added_chunks,
+                "changed": changed,
+                "tamper_ratio": round(changed / total, 4)
+            }
+            
         if raw_changed or (text_changed is True):
             modified[path] = {
                 "baseline_raw": b_raw,

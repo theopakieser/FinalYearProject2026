@@ -10,7 +10,7 @@ import os
 import traceback
 from pathlib import Path
 from .snapshot import extract_text_snapshot
-from .utils import calculate_hash, calculate_text_hash
+from .utils import calculate_hash, calculate_text_hash, calculate_chunk_hashes
 
 
 def scan_folder(file_path: str) -> list[str]:
@@ -88,7 +88,12 @@ def build_file_record(file_path: Path, base_root: Path, snapshot_root: Path, alg
         record["text"] = {
             "kind": snap.kind,
             "hash": calculate_text_hash(snap.text, algorithm),
-            "snapshot": str(out_path.relative_to(snapshot_root))
+            "snapshot": str(out_path.relative_to(snapshot_root)),
+            "chunking": {
+                "method": "lines",
+                "max_lines": 20
+            },
+            "chunks": calculate_chunk_hashes(snap.text, algorithm, max_lines=20)
         }
 
     return record
@@ -132,7 +137,7 @@ def build_baseline(base_dir: str, algorithm: str, baseline_path: str = "baseline
             traceback.print_exc()
 
     baseline = {
-        "schema_version": 3,
+        "schema_version": 4,
         "algorithm": algorithm,
         "base_dir": str(base_root),
         "snapshot_dir": str(snapshot_root),

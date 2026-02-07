@@ -43,3 +43,26 @@ def calculate_text_hash(text: str, algorithm: str) -> str:
     h = hashlib.new(algorithm)
     h.update(text.encode("utf-8", errors="replace"))
     return h.hexdigest()
+
+def chunk_text(text: str, max_lines: int = 20) -> list[str]:
+    """
+    Split text into chunks of N lines
+    This is stable and works across txt/pdf/docx snapshots
+    """
+    lines = text.splitlines()
+    chunks = []
+    for i in range(0, len(lines), max_lines):
+        chunk = "\n".join(lines[i:i + max_lines]).strip()
+        if chunk:
+            chunks.append(chunk)
+    return chunks
+
+
+def calculate_chunk_hashes(text: str, algorithm: str, max_lines: int = 20) -> list[str]:
+    """
+    Returns a list of hashes, one per chunk
+    """
+    hashes = []
+    for chunk in chunk_text(text, max_lines=max_lines):
+        hashes.append(calculate_text_hash(chunk, algorithm))
+    return hashes

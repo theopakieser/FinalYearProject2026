@@ -78,6 +78,13 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
                     elif info.get("text_note"):
                         print(f"Text Snapshot: {info['text_note']}")
 
+                    ci = info.get("chunk_info")
+                    if ci:
+                        print(f"Chunk Tamper Ratio: {ci['tamper_ratio']}")
+                        print(
+                                f"Chunks baseline/current: {ci['total_baseline']}/{ci['total_current']} "
+                                f"(added {ci['added']}, removed {ci['removed']})"
+                            )
             if added:
                 print("\n[ADDED FILES]")
                 for path in added:
