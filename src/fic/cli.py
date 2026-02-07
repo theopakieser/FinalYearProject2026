@@ -6,14 +6,13 @@
 #imports
 import argparse #parsing cmd line args
 import os #checking files/folders and working with paths
-from pathlib import Path
 import time
 import sys
 
 #custom modules from code already written
-from .scanner import generate_hashes
+from .scanner import build_baseline
 from .manifest import save, load
-from .compare import compare_manifests
+from .compare import compare_baselines
 from .utils import to_hex_string, log_event
 
 SUPPORTED_HASHES = ["sha256", "md5", "sha1"]
@@ -32,10 +31,10 @@ def create_baseline(folder, output_path = "baseline.json", algorithm="sha256"):
     print(f"Scanning..... {folder}")
     print(f"Hash algorithm in use: {algorithm.upper()}")
     log_event(f"Hash algorithm in use: {algorithm}")
-    hash_data = generate_hashes(folder, algorithm) #will return file path and hash
+    baseline = build_baseline(folder, algorithm, output_path) #will return file path and hash
 
     #save generated output
-    save(hash_data, output_path, algorithm)
+    save(baseline, output_path, algorithm)
     print(f"Saved to {output_path}!")
 
 
@@ -54,23 +53,31 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
     try:
         while True:
             print(f"Scanning....... {folder}")
-            current = generate_hashes(folder, algorithm) #runs scanner again on folder to return a new dictionary
+            current = build_baseline(folder, algorithm, baseline_path) #runs scanner again on folder to return a new dictionary
 
-            modified, added, deleted = compare_manifests(baseline, current) 
+            modified, added, deleted = compare_baselines(baseline, current)
             #compared dictionaries with the help of comapare.py
 
             print("\n=== Integrity Verification Report ===") #report header
 
             if modified: #if list has been modified
                 print("\n[MODIFIED FILES]") #header
-                for path, hashes in modified.items(): #loop
+                for path, info in modified.items(): #loop
                     print(f"\nFile: {path}") #print modified file paths
             
-                    print(f"Baseline Hash: {hashes['baseline']}")
-                    print(f"Current Hash: {hashes['current']}")
+                    print(f"Baseline Hash: {info['baseline_raw']}")
+                    print(f"Current Hash: {info['current_raw']}")
 
-                    print(f"Baseline Hex: {to_hex_string(hashes['baseline'])}")
-                    print(f"Current Hex: {to_hex_string(hashes['current'])}")
+                    print(f"Baseline Hex: {to_hex_string(info['baseline_raw'])}")
+                    print(f"Current Hex: {to_hex_string(info['current_raw'])}")
+
+                    if info.get("text_changed") is True:
+                        print("Test Snapshot: CHANGED")
+                    elif info.get("text_changed") is False:
+                        print("Text Snapshot: UNCHANGED")
+                    elif info.get("text_note"):
+                        print(f"Text Snapshot: {info['text_note']}")
+
             if added:
                 print("\n[ADDED FILES]")
                 for path in added:
@@ -79,6 +86,7 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
                 print("\n[DELETED FILES]")
                 for path in deleted:
                     print(path)
+                    
             if not modified and not added and not deleted:
                 print("\nNo changes detected")
                 log_event("No changes detected")

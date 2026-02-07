@@ -4,7 +4,8 @@
 # Date: 21/12/2025
 
 #imports
-from typing import Dict, List, Tuple
+from __future__ import annotations
+from typing import Dict, List, Tuple, Any
 #dict = dictionary where keys and vals are strings
 #list = list of strings
 #tuple = fixed size container of multiple values
@@ -12,7 +13,7 @@ from typing import Dict, List, Tuple
 def compare_manifests(
         baseline: Dict[str, str],
         current: Dict[str, str] #path to hash mappings
-) -> Tuple[List[str], List[str], List[str]]: #returns 3 lists of strings, modified, added, deleted
+) -> Tuple[Dict[str, Dict], List[str], List[str]]: #returns 3 lists of strings, modified, added, deleted
     """Compare a baseline manifest against a current manifest.
     
     Returns:
@@ -49,3 +50,73 @@ def compare_manifests(
 
 
     return modified, added, deleted #return lists in orders
+
+def _index_files(baseline: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """
+    Turns baseline files into a dict keyed by path for fast lookup
+    """
+    files = baseline.get("files", [])
+    idx: Dict[str, Dict[str, Any]] = {}
+    for item in files:
+        path = item.get("path")
+        if path:
+            idx[path] = item
+    return idx
+
+
+def compare_baselines(
+    baseline: Dict[str, Any],
+    current: Dict[str, Any]
+) -> Tuple[Dict[str, Dict[str, Any]], List[str], List[str]]:
+    """Compare two BASELINE dicts
+
+    Returns:
+    - modified: dict keyed by file path with raw + optional text comparisons
+    - added: files only in current
+    - deleted: files only in baseline
+    """
+    base_idx = _index_files(baseline)
+    curr_idx = _index_files(current)
+
+    base_paths = set(base_idx.keys())
+    curr_paths = set(curr_idx.keys())
+
+    added = sorted(curr_paths - base_paths)
+    deleted = sorted(base_paths - curr_paths)
+
+    modified: Dict[str, Dict[str, Any]] = {}
+
+    for path in (base_paths & curr_paths):
+        b = base_idx[path]
+        c = curr_idx[path]
+
+        b_raw = b.get("raw_hash")
+        c_raw = c.get("raw_hash")
+        raw_changed = (b_raw != c_raw)
+
+        b_text = b.get("text")
+        c_text = c.get("text")
+
+   
+        text_changed = None
+        text_note = None
+
+        if b_text is not None:
+            if c_text is None:
+                text_note = "text_unavailable_now"
+            else:
+                text_changed = (b_text.get("hash") != c_text.get("hash"))
+
+        if raw_changed or (text_changed is True):
+            modified[path] = {
+                "baseline_raw": b_raw,
+                "current_raw": c_raw,
+                "raw_changed": raw_changed,
+
+                "text_changed": text_changed,
+                "baseline_text_hash": b_text.get("hash") if b_text else None,
+                "current_text_hash": c_text.get("hash") if c_text else None,
+                "text_note": text_note,
+            }
+
+    return modified, added, deleted
