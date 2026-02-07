@@ -6,8 +6,8 @@
 #imports
 import argparse #parsing cmd line args
 import os #checking files/folders and working with paths
-import time
-import sys
+import time #for watch mode
+import sys #returns success/failure codes
 
 #custom modules from code already written
 from .scanner import build_baseline
@@ -49,7 +49,7 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
     print(f"Hash algorithm in use: {algorithm.upper()}")
     log_event(f"Hash algorithm in use: {algorithm}")
 
-    integrity_violated = False
+    integrity_violated = False #tracks if any change was detected
     try:
         while True:
             print(f"Scanning....... {folder}")
@@ -71,17 +71,17 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
                     print(f"Baseline Hex: {to_hex_string(info['baseline_raw'])}")
                     print(f"Current Hex: {to_hex_string(info['current_raw'])}")
 
-                    if info.get("text_changed") is True:
-                        print("Test Snapshot: CHANGED")
-                    elif info.get("text_changed") is False:
+                    if info.get("text_changed") is True: #if extracted text print changed
+                        print("Text Snapshot: CHANGED")
+                    elif info.get("text_changed") is False: #if not, say unchanged
                         print("Text Snapshot: UNCHANGED")
                     elif info.get("text_note"):
-                        print(f"Text Snapshot: {info['text_note']}")
+                        print(f"Text Snapshot: {info['text_note']}") #special condition
 
-                    ci = info.get("chunk_info")
+                    ci = info.get("chunk_info") #pulls chunk comparison and prints ratio
                     if ci:
                         print(f"Chunk Tamper Ratio: {ci['tamper_ratio']}")
-                        print(
+                        print( #prints baseline v current chunk count and added/removed
                                 f"Chunks baseline/current: {ci['total_baseline']}/{ci['total_current']} "
                                 f"(added {ci['added']}, removed {ci['removed']})"
                             )
@@ -103,15 +103,15 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
                     f"Modified: {len(modified)} Added: {len(added)} Deleted: {len(deleted)}"
             )
         
-            if not watch: 
+            if not watch: #watch mode control, exit after one scan
                 break
         
             print(f"\nWaiting {interval} seconds before next scan....")
             time.sleep(interval)
         
-    except  KeyboardInterrupt:
+    except  KeyboardInterrupt: #CTRL + C handling, clean exit
         print("\nMonitoring stopped by user")
-        log_event("Monintoring stopped by user (Ctrl+C)")
+        log_event("Monitoring stopped by user (Ctrl+C)")
 
         if not watch:
             if integrity_violated:
