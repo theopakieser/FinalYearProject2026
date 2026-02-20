@@ -1,0 +1,12 @@
+{
+  "case_id": "2026-FIC-TEST-001",
+  "investigator": "T. Pakieser",
+  "acquisition_date": "2026-03-01T10:12:00Z",
+  "source_device": {
+    "type": "Workstation",
+    "os": "Windows 10",
+    "hostname": "TEST-PC-01"
+  },
+  "hash_algorithm": "SHA-256",
+  "notes": "File created for integrity verification testing purposes."
+}

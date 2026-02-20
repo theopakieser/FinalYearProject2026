@@ -1,0 +1,52 @@
+{
+    "algorithm": "sha256",
+    "base_dir": "C:\\Users\\test\\OneDrive - South East Technological University (Waterford Campus)\\FinalYearProject\\FileIntegrityChecker\\docs\\evaluation\\test_files\\small_test",
+    "files": [
+        {
+            "mtime": 1769593900,
+            "path": "config.cfg",
+            "raw_hash": "deb90889374b4a4a19b326e31125c0891b6e51be202d6140a15c5f32a05b5058",
+            "size": 324,
+            "text": {
+                "hash": "20fcba9363556ba79fc3dea2f1aa88846c34a7ba97fff815bd555a8edcb90d6a",
+                "kind": "text",
+                "snapshot": "config.cfg.txt"
+            }
+        },
+        {
+            "mtime": 1769593781,
+            "path": "file1.txt",
+            "raw_hash": "e17bfd82c4bf0f16c8b7bd5d2580c45b2d3c0dfb280e78ea39e02e6eb3b014f9",
+            "size": 450,
+            "text": {
+                "hash": "35336187edb2cd2a185356cbee6e47ade43bdba2dad8d031735ccd5f939c5286",
+                "kind": "text",
+                "snapshot": "file1.txt.txt"
+            }
+        },
+        {
+            "mtime": 1769593807,
+            "path": "file2.txt",
+            "raw_hash": "6f5d1d4cbc17b89cf4a43b9924d8047445b70362d7ee9973f4109a1272de651f",
+            "size": 55,
+            "text": {
+                "hash": "7d516f88ed5a84ac3702a2574907503c54c0a2633e69faff18b9400f96ba9682",
+                "kind": "text",
+                "snapshot": "file2.txt.txt"
+            }
+        },
+        {
+            "mtime": 1769593843,
+            "path": "notes.md",
+            "raw_hash": "05528fc06682bfadafc9d4a2e83e441a17cbcfbeae56df31df2c6872a25e5481",
+            "size": 225,
+            "text": {
+                "hash": "83851ed274d19db80aea55e3e2a33eccb2a8f3ab0294d9cad1f1183f123974e6",
+                "kind": "text",
+                "snapshot": "notes.md.txt"
+            }
+        }
+    ],
+    "schema_version": 2,
+    "snapshot_dir": "C:\\Users\\test\\OneDrive - South East Technological University (Waterford Campus)\\FinalYearProject\\FileIntegrityChecker\\src\\snapshots"
+}

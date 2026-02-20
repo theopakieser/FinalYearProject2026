@@ -83,10 +83,9 @@ config.json
 .DS_Store
 Thumbs.db
 
-# VeriLite generated output
-baseline*.json
-baseline*.sig
-snapshots/
+# File Integrity Checker output
+baseline.json
+baseline.sig
 verilite.log
 
 # Evaluation artefacts (not versioned)

@@ -26,21 +26,6 @@ def calculate_hash(file_path, algorithm:str):
     #returns final hash as hexidecimal string
     return hash_function.hexdigest()
 
-def main(): 
-    #prompt user to enter a file and an algorithm
-    file_path = input("Enter the file path: ").strip()
-    algorithm = input("Enter hash algorithm desired: ").lower().replace("-", "")
-
-    try:
-        #calls function to calculate the hash of the file 
-        file_hash = calculate_hash(file_path, algorithm)
-        print(f"The {algorithm} hash of the file is {file_hash}")
-    #exception handling
-    except FileNotFoundError:
-        print("File not found, try another one ")
-    except ValueError:
-        print("Invalid hash algorithm: {algorithim}. Please enter a valid algorithm")
-
 
 def to_hex_string(hash_str: str) -> str:
     """
@@ -52,4 +37,9 @@ def to_hex_string(hash_str: str) -> str:
 def log_event(message, log_file="verilite.log"):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(log_file, "a") as f:
-        f.write(f"{timestamp} | {message}")
+        f.write(f"{timestamp} | {message}\n")
+
+def calculate_text_hash(text: str, algorithm: str) -> str:
+    h = hashlib.new(algorithm)
+    h.update(text.encode("utf-8", errors="replace"))
+    return h.hexdigest()
