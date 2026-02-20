@@ -27,19 +27,45 @@ def calculate_hash(file_path, algorithm:str):
     return hash_function.hexdigest()
 
 
-def to_hex_string(hash_str: str) -> str:
+def to_hex_string(hash_str: str) -> str: #takes hash string and returns formatted version
     """
     Formats a hexidecimal hash string into byte-paired groups
     for improved readability
     """
     return " ".join(hash_str[i:i+2] for i in range(0, len(hash_str), 2))
 
-def log_event(message, log_file="verilite.log"):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def log_event(message, log_file="verilite.log"): #logs
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S \n")
     with open(log_file, "a") as f:
         f.write(f"{timestamp} | {message}\n")
 
-def calculate_text_hash(text: str, algorithm: str) -> str:
-    h = hashlib.new(algorithm)
-    h.update(text.encode("utf-8", errors="replace"))
-    return h.hexdigest()
+def calculate_text_hash(text: str, algorithm: str) -> str: #hashes content not file bytes
+    h = hashlib.new(algorithm) #creates new obj of hash algo
+    h.update(text.encode("utf-8", errors="replace")) #converts to bytes
+    return h.hexdigest() #returns final as lowercase hex string
+
+def chunk_text(text: str, max_lines: int = 20) -> list[str]: #splits text string into chunks
+    """
+    Split text into chunks of N lines
+    This is stable and works across txt/pdf/docx snapshots
+    """
+    lines = text.splitlines() #splits string insto list of lines
+    chunks = [] #empty list for chunks
+    for i in range(0, len(lines), max_lines): #loop
+        chunk = "\n".join(lines[i:i + max_lines]).strip() #takes slice of up to max lines and joins them back into one string
+        if chunk: #if chunk string is not empty, add to list
+            chunks.append(chunk)
+    return chunks
+
+
+#takes full text, splits into chunks and hashes each chunk
+def calculate_chunk_hashes(text: str, algorithm: str, max_lines: int = 20) -> list[str]:
+    """
+    Returns a list of hashes, one per chunk
+    """
+    hashes = [] #empty list for chunk hashes
+    #calls chunk_text() to get chunks and loops over them
+    for chunk in chunk_text(text, max_lines=max_lines):
+        #hashes each chunk's text with same algo and adds to list
+        hashes.append(calculate_text_hash(chunk, algorithm))
+    return hashes
