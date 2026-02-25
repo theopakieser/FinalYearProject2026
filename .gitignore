@@ -90,5 +90,4 @@ snapshots/
 verilite.log
 
 # Evaluation artefacts (not versioned)
-docs/evaluation/test_files/
-docs/evaluation/logs/
+docs/evaluation/
