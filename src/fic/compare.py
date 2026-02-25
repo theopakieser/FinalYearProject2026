@@ -117,7 +117,7 @@ def compare_baselines(  #makes 2 baseline dicts
                 min_len = min(len(b_chunks), len(c_chunks))
 
                 changed_indices = []
-                for i in ranf(min_len):
+                for i in range(min_len):
                     if b_chunks[i] != c_chunks[i]:
                         changed_indices.append(i)
 

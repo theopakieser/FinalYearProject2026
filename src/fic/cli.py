@@ -8,6 +8,9 @@ import argparse #parsing cmd line args
 import os #checking files/folders and working with paths
 import time #for watch mode
 import sys #returns success/failure codes
+import json
+from pathlib import Path
+from datetime import datetime
 
 #custom modules from code already written
 from .scanner import build_baseline
@@ -17,6 +20,10 @@ from .utils import to_hex_string, log_event
 
 SUPPORTED_HASHES = ["sha256", "md5", "sha1"]
 
+def write_report(report: dict, report_path: str) -> None:
+    out = Path(report_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=4, ensure_ascii=False), encoding="utf-8")
 
 #create baseline
 def create_baseline(folder, output_path = "baseline.json", algorithm="sha256"):
@@ -57,6 +64,47 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
 
             modified, added, deleted = compare_baselines(baseline, current)
             #compared dictionaries with the help of comapare.py
+
+            #JSON report for GUI
+            report_path = str(Path(baseline_path).with_suffix(".report.json"))
+
+            report = {
+                "schema_version": 1,
+                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "algorithm": algorithm,
+                "folder": os.path.abspath(folder),
+                "baseline_path": os.path.abspath(baseline_path),
+
+                "summary": {
+                    "modified": len(modified),
+                    "added": len(added),
+                    "deleted": len(deleted),
+                },
+
+                "modified": [],
+                "added": added,
+                "deleted": deleted,
+            }
+
+            for path, info in modified.items():
+                report["modified"].append({
+                    "path": path,
+
+                    "baseline_raw": info.get("baseline_raw"),
+                    "current_raw": info.get("current_raw"),
+                    "raw_changed": info.get("raw_changed"),
+
+                    "text_changed": info.get("text_changed"),
+                    "baseline_text_hash": info.get("baseline_text_hash"),
+                    "current_text_hash": info.get("current_text_hash"),
+                    "text_note": info.get("text_note"),
+
+                    #includes changed_indices/added_indices/removed_indices
+                    "chunk_info": info.get("chunk_info"),
+                })
+
+            write_report(report, report_path)
+            print(f"\nReport written: {report_path}")
 
             print("\n=== Integrity Verification Report ===") #report header
 
