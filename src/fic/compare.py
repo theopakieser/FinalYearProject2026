@@ -114,22 +114,41 @@ def compare_baselines(  #makes 2 baseline dicts
             c_chunks = c_text.get("chunks")
 
             if isinstance(b_chunks, list) and isinstance(c_chunks, list): #makes sure both are lists 
-                b_set = set(b_chunks) #converts into sets
-                c_set = set(c_chunks)
+                min_len = min(len(b_chunks), len(c_chunks))
 
-                removed = len(b_set - c_set) #how many b chunks missing from c
-                added_chunks = len(c_set - b_set) #how many new chunks in c
+                changed_indices = []
+                for i in ranf(min_len):
+                    if b_chunks[i] != c_chunks[i]:
+                        changed_indices.append(i)
 
-                total = max(len(b_chunks), 1) #baseline chunk count, must be over 1
-                changed = removed #changed metric is removed chunks for now
+                #chunks that exist only on one side, modified
+                added_indices = list(range(min_len, len(c_chunks)))
+                removed_indices = list(range(min_len, len(b_chunks)))
+
+                #for existing counts
+                added_count = len(added_indices)
+                removed_count = len(removed_indices)
+
+                #tamper ratio: how many baseline chunks differ at same index
+                total = max(len(b_chunks), 1)
+                tamper_ratio = round(len(changed_indices)/total, 4)
 
                 chunk_info = { #dict summarising chunk-based changes
+                    "method": "lines",
+                    "max_lines": (b_text.get("chunking") or {}).get("max_lines", 20),
                     "total_baseline": len(b_chunks),
                     "total_current": len(c_chunks),
-                    "removed": removed,
-                    "added": added_chunks,
-                    "changed": changed,
-                    "tamper_ratio": round(changed / total, 4) #rounded to 4 decimals
+
+                    #location-aware fields for the GUI
+                    "changed_indices": changed_indices,
+                    "added_indices": added_indices,
+                    "removed_indices": removed_indices,
+
+                    #counts
+                    "changed": len(changed_indices),
+                    "added": added_count,
+                    "removed": removed_count,
+                    "tamper_ratio": tamper_ratio,
                 }
 
         if raw_changed or (text_changed is True): #decided if modified and store details
