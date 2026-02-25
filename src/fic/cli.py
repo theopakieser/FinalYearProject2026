@@ -44,6 +44,25 @@ def create_baseline(folder, output_path = "baseline.json", algorithm="sha256"):
     save(baseline, output_path, algorithm)
     print(f"Saved to {output_path}!")
 
+def _snapshot_abs_path(manifest: dict, file_rel_path: str) -> str | None:
+    """
+    Returns absolute path to the snapshot txt for a given file path in a manifest,
+    or None if not available.
+    """
+    snap_root = Path(manifest.get("snapshot_dir", "")).resolve()
+    files = manifest.get("files", [])
+
+    for rec in files:
+        if rec.get("path") == file_rel_path:
+            text = rec.get("text")
+            if not text:
+                return None
+            snap_rel = text.get("snapshot")
+            if not snap_rel:
+                return None
+            return str((snap_root / snap_rel).resolve())
+
+    return None
 
 def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algorithm="sha256"):
     if not os.path.exists(folder): #check if folder exists
@@ -101,6 +120,10 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
 
                     #includes changed_indices/added_indices/removed_indices
                     "chunk_info": info.get("chunk_info"),
+
+                    #snapshot file locations
+                    "baseline_snapshot_path": _snapshot_abs_path(baseline, path),
+                    "current_snapshot_path": _snapshot_abs_path(current, path),
                 })
 
             write_report(report, report_path)
