@@ -107,7 +107,7 @@ def iter_files(base_root: Path): #generator that yields every file under base_ro
             yield p
 
 #creates baseline schema dict for directory
-def build_baseline(base_dir: str, algorithm: str, baseline_path: str = "baseline.json") -> dict:
+def build_baseline(base_dir: str, algorithm: str, baseline_path: str = "baseline.json", snapshot_dir: str | None = None) -> dict:    
     """
     Scans a directory and retuns the following:
     {
@@ -121,7 +121,7 @@ def build_baseline(base_dir: str, algorithm: str, baseline_path: str = "baseline
     base_root = Path(base_dir).resolve() #turns input into absolute normalised path
     baseline_path = Path(baseline_path).resolve() #where baseline file will be written to
 
-    snapshot_root = baseline_path.parent / "snapshots" #snapshot folder
+    snapshot_root = Path(snapshot_dir).resolve() if snapshot_dir else (baseline_path.parent / "snapshots")    
     records = [] #list of per file record dicts
 
     for file_path in iter_files(base_root): #loop every file

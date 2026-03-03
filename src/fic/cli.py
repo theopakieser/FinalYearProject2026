@@ -38,6 +38,10 @@ def create_baseline(folder, output_path = "baseline.json", algorithm="sha256"):
     print(f"Scanning..... {folder}")
     print(f"Hash algorithm in use: {algorithm.upper()}")
     log_event(f"Hash algorithm in use: {algorithm}")
+
+    out_path = Path(output_path).resolve()
+    snapshot_dir = str((out_path.parent / "snapshots_baseline").resolve())
+
     baseline = build_baseline(folder, algorithm, output_path) #will return file path and hash
 
     #save generated output
@@ -79,7 +83,9 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
     try:
         while True:
             print(f"Scanning....... {folder}")
-            current = build_baseline(folder, algorithm, baseline_path) #runs scanner again on folder to return a new dictionary
+            base_path = Path(baseline_path).resolve()
+            current_snapshot_dir = str((base_path.parent / "snapshots_current").resolve())
+            current = build_baseline(folder, algorithm, baseline_path, snapshot_dir=current_snapshot_dir)
 
             modified, added, deleted = compare_baselines(baseline, current)
             #compared dictionaries with the help of comapare.py
