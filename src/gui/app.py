@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-
+import tempfile
 
 st.set_page_config(page_title="VeriLite GUI", layout="wide")
 
@@ -57,24 +57,78 @@ def build_deleted_df(report: dict) -> pd.DataFrame:
 
 st.title("VeriLite — Integrity Report Viewer")
 
-#sidebar: load report
 st.sidebar.header("Load report")
 
-default_path = ""
-report_path_str = st.sidebar.text_input("Report path (.report.json)", value=default_path)
+mode = st.sidebar.radio(
+    "Choose input method",
+    ["Upload report", "Browse folder", "Paste path"],
+    index=0
+)
 
-#allow browsing from a directory (optional)
 report_file = None
-if report_path_str.strip():
-    rp = Path(report_path_str.strip())
-    if rp.exists() and rp.is_file():
-        report_file = rp
 
+if mode == "Upload report":
+    uploaded = st.sidebar.file_uploader(
+        "Upload *.report.json",
+        type=["json"],
+        accept_multiple_files=False
+    )
+
+    if uploaded is not None:
+        #save upload to a temp file so the rest of the app can treat it like a normal Path
+        tmp_dir = Path(tempfile.gettempdir()) / "verilite_reports"
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+
+        tmp_path = tmp_dir / uploaded.name
+        tmp_path.write_bytes(uploaded.getvalue())
+
+        report_file = tmp_path
+
+        st.sidebar.success(f"Loaded: {uploaded.name}")
+
+elif mode == "Browse folder":
+    folder_str = st.sidebar.text_input(
+        "Folder to search",
+        value=str(Path.cwd())
+    ).strip()
+
+    folder = Path(folder_str)
+    if folder.exists() and folder.is_dir():
+        reports = sorted(folder.rglob("*.report.json"))
+        if reports:
+            chosen = st.sidebar.selectbox(
+                "Select report",
+                options=[str(p) for p in reports],
+                index=0
+            )
+            report_file = Path(chosen)
+        else:
+            st.sidebar.info("No *.report.json files found in this folder.")
+    else:
+        st.sidebar.warning("Folder not found.")
+
+else:  #paste path
+    report_path_str = st.sidebar.text_input(
+        "Report path (.report.json)",
+        value=""
+    ).strip()
+
+    if report_path_str:
+        rp = Path(report_path_str)
+        if rp.exists() and rp.is_file():
+            report_file = rp
+        else:
+            st.sidebar.error("That file path doesn't exist.")
+
+#stop if nothing selected
 if report_file is None:
-    st.info("Enter the path to your *.report.json file in the sidebar to begin.")
+    st.info("Load a report using the sidebar to begin.")
     st.stop()
 
 report = load_report(report_file)
+if report.get("schema_version") != 1 or "modified" not in report:
+    st.error("That JSON doesn't look like a VeriLite report.")
+    st.stop()
 
 #header info
 colA, colB, colC, colD = st.columns(4)
