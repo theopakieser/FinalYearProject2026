@@ -1,8 +1,26 @@
 import streamlit as st
+from pathlib import Path
 
 st.set_page_config(page_title="About — VeriLite", layout="wide")
 
-st.title("About VeriLite")
+assets_dir = Path(__file__).parent.parent / "assets"
+logo_path = assets_dir / "setu_logo.png" 
+
+col1, col2 = st.columns([1, 4], vertical_alignment="center")
+
+with col1:
+    if logo_path.exists():
+        st.image(str(logo_path), use_container_width=True)
+
+with col2:
+    st.title("About VeriLite")
+
+    source_url = "https://github.com/theopakieser/FinalYearProject2026"
+    st.markdown(f"**Source code:** {source_url}")
+
+    st.link_button("Open repository", source_url)
+
+st.divider()
 
 st.markdown(
     """
