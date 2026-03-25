@@ -7,6 +7,22 @@ import tempfile
 
 st.set_page_config(page_title="VeriLite GUI", layout="wide")
 
+assets_dir = Path(__file__).parent / "assets"
+logo_path = assets_dir / "setu_logo.png"
+
+with st.sidebar:
+    if logo_path.exists():
+        st.image(str(logo_path), use_container_width=True)
+
+    st.markdown("### VeriLite")
+    st.caption("Lightweight file integrity checker for baseline + verification, with chunk-based change localisation.")
+
+    source_url = "https://github.com/theopakieser/FinalYearProject2026"
+    st.markdown(f"Source code: {source_url}")
+    st.link_button("Open repository", source_url)
+
+    st.divider()
+
 
 def load_report(report_path: Path) -> dict:
     return json.loads(report_path.read_text(encoding="utf-8"))
