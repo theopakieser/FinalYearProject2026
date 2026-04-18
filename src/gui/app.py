@@ -2,7 +2,7 @@ import json
 import html
 import tempfile
 import zipfile
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Optional
 
 import pandas as pd
@@ -174,25 +174,25 @@ def extract_bundle_zip(uploaded_zip) -> Path:
     return extract_root
 
 
-def resolve_snapshot_from_bundle(bundle_root: Path, snap_path_str: str) -> Optional[Path]:
-    """
-    Given a snapshot path string from the report, map it to a file inside the bundle.
-    Works even if the report contains absolute Windows paths.
-    """
+def resolve_snapshot_from_bundle(bundle_root: Path, snap_path_str: str):
     if not snap_path_str:
         return None
 
-    name = Path(snap_path_str).name
+    # ff it's a Windows path, parse it correctly on Linux
+    if "\\" in snap_path_str:
+        name = PureWindowsPath(snap_path_str).name
+    else:
+        name = Path(snap_path_str).name
 
-    candidates = [
-        bundle_root / "snapshots_baseline" / name,
-        bundle_root / "snapshots_current" / name,
-    ]
+    # first try the expected bundle layout
+    for folder in ["snapshots_baseline", "snapshots_current"]:
+        root = bundle_root / folder
+        if root.exists():
+            hits = list(root.rglob(name))  #recursive (supports nested)
+            if hits:
+                return hits[0]
 
-    for c in candidates:
-        if c.exists():
-            return c
-
+    #fallback: search anywhere in bundle
     hits = list(bundle_root.rglob(name))
     return hits[0] if hits else None
 
