@@ -4,8 +4,59 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 import tempfile
+import html
 
 st.set_page_config(page_title="VeriLite GUI", layout="wide")
+
+#----CSS----
+st.markdown(
+    """
+<style>
+.diffbox {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  white-space: pre;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  overflow-x: auto;
+}
+
+.same-line {
+  display: block;
+  padding: 0 6px;
+  border-radius: 6px;
+  margin: 1px 0;
+  background: rgba(34, 197, 94, 0.16);   /* green */
+  border-left: 4px solid rgba(34, 197, 94, 0.65);
+}
+
+.diff-line {
+  display: block;
+  padding: 0 6px;
+  border-radius: 6px;
+  margin: 1px 0;
+  background: rgba(239, 68, 68, 0.16);   /* red */
+  border-left: 4px solid rgba(239, 68, 68, 0.65);
+}
+
+.lineno {
+  display: inline-block;
+  width: 64px;
+  color: rgba(255,255,255,0.45);
+  user-select: none;
+}
+
+.missing {
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+}
+</style>
+""",
+    unsafe_allow_html=True
+)
 
 assets_dir = Path(__file__).parent / "assets"
 logo_path = assets_dir / "setu_logo.png"
@@ -48,6 +99,41 @@ def split_into_chunks(text: str, max_lines: int) -> list[str]:
             chunks.append(chunk)
     return chunks
 
+
+#----COLOURED RENDERING----
+def render_colored_lines(left_text: str, right_text: str, start_line: int) -> tuple[str, str]:
+    """
+    Returns (left_html, right_html) where each line is colored:
+    - green if equal at same line index
+    - red if different / missing on either side
+    """
+    left_lines = left_text.splitlines()
+    right_lines = right_text.splitlines()
+
+    n = max(len(left_lines), len(right_lines))
+    left_out = []
+    right_out = []
+
+    for i in range(n):
+        ln = start_line + i
+
+        l = left_lines[i] if i < len(left_lines) else None
+        r = right_lines[i] if i < len(right_lines) else None
+
+        same = (l == r) and (l is not None)
+
+        left_class = "same-line" if same else "diff-line"
+        right_class = "same-line" if same else "diff-line"
+
+        l_text = html.escape(l) if l is not None else '<span class="missing">[no line]</span>'
+        r_text = html.escape(r) if r is not None else '<span class="missing">[no line]</span>'
+
+        left_out.append(f'<span class="{left_class}"><span class="lineno">{ln:>4} |</span> {l_text}</span>')
+        right_out.append(f'<span class="{right_class}"><span class="lineno">{ln:>4} |</span> {r_text}</span>')
+
+    left_html = '<div class="diffbox">' + "\n".join(left_out) + "</div>"
+    right_html = '<div class="diffbox">' + "\n".join(right_out) + "</div>"
+    return left_html, right_html
 
 def build_modified_df(report: dict) -> pd.DataFrame:
     rows = []
@@ -283,16 +369,27 @@ with tab_mod:
     st.caption(f"Chunk {chosen_chunk} corresponds to lines ~{start_line}–{end_line} (max_lines={max_lines})")
 
     left, right = st.columns(2)
+
+    #define the chunk text for each side
+    base_chunk = base_chunks[chosen_chunk] if chosen_chunk < len(base_chunks) else ""
+    curr_chunk = curr_chunks[chosen_chunk] if chosen_chunk < len(curr_chunks) else ""
+
+    #render coloured HTML
+    left_html, right_html = render_colored_lines(base_chunk, curr_chunk, start_line)
+
+    st.markdown(
+        "- **Green** = same line in baseline and current\n"
+        "- **Red** = changed / added / removed line",
+    )
+
     with left:
         st.write("**Baseline snapshot chunk**")
-        chunk_text = base_chunks[chosen_chunk] if chosen_chunk < len(base_chunks) else ""
-        st.code(chunk_text, language="text")
+        st.markdown(left_html, unsafe_allow_html=True)
+
     with right:
         st.write("**Current snapshot chunk**")
-        chunk_text = curr_chunks[chosen_chunk] if chosen_chunk < len(curr_chunks) else ""
-        st.code(chunk_text, language="text")
-
-
+        st.markdown(right_html, unsafe_allow_html=True)
+        
 #----ADDED FILES----
 with tab_added:
     df_added = build_added_df(report)
