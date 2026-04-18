@@ -42,11 +42,21 @@ def create_baseline(folder, output_path = "baseline.json", algorithm="sha256"):
     out_path = Path(output_path).resolve()
     snapshot_dir = str((out_path.parent / "snapshots_baseline").resolve())
 
-    baseline = build_baseline(folder, algorithm, output_path) #will return file path and hash
+    baseline = build_baseline(folder, algorithm, output_path, snapshot_dir=snapshot_dir) #will return file path and hash
 
     #save generated output
     save(baseline, output_path, algorithm)
     print(f"Saved to {output_path}!")
+
+def _snapshot_rel_path(manifest: dict, file_rel_path: str) -> str | None:
+    files = manifest.get("files", [])
+    for rec in files:
+        if rec.get("path") == file_rel_path:
+            text = rec.get("text")
+            if not text:
+                return None
+            return text.get("snapshot")
+    return None
 
 def _snapshot_abs_path(manifest: dict, file_rel_path: str) -> str | None:
     """
@@ -130,7 +140,13 @@ def verify(folder, baseline_path="baseline.json", watch=False, interval=60, algo
                     #snapshot file locations
                     "baseline_snapshot_path": _snapshot_abs_path(baseline, path),
                     "current_snapshot_path": _snapshot_abs_path(current, path),
+
+                    #snapshot file locations (relative inside snapshots folder) - needed for ZIP bundles
+                    "baseline_snapshot_rel": _snapshot_rel_path(baseline, path),
+                    "current_snapshot_rel": _snapshot_rel_path(current, path),
                 })
+
+                
 
             write_report(report, report_path)
             print(f"\nReport written: {report_path}")
