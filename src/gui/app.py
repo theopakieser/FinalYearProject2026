@@ -1,14 +1,17 @@
 import json
+import html
+import tempfile
+import zipfile
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import streamlit as st
-import tempfile
-import html
+
 
 st.set_page_config(page_title="VeriLite GUI", layout="wide")
 
-#----CSS----
+# ---- CSS ----
 st.markdown(
     """
 <style>
@@ -58,6 +61,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ---- Sidebar branding ----
 assets_dir = Path(__file__).parent / "assets"
 logo_path = assets_dir / "setu_logo.png"
 
@@ -75,6 +79,7 @@ with st.sidebar:
     st.divider()
 
 
+# ---- Helpers ----
 def load_report(report_path: Path) -> dict:
     return json.loads(report_path.read_text(encoding="utf-8"))
 
@@ -90,7 +95,7 @@ def read_text_file(path: Path) -> str:
 
 
 def split_into_chunks(text: str, max_lines: int) -> list[str]:
-    #splitlines(), then join in groups of max_lines, strip each chunk
+    # splitlines(), then join in groups of max_lines, strip each chunk
     lines = text.splitlines()
     chunks = []
     for i in range(0, len(lines), max_lines):
@@ -100,7 +105,6 @@ def split_into_chunks(text: str, max_lines: int) -> list[str]:
     return chunks
 
 
-#----COLOURED RENDERING----
 def render_colored_lines(left_text: str, right_text: str, start_line: int) -> tuple[str, str]:
     """
     Returns (left_html, right_html) where each line is colored:
@@ -135,6 +139,64 @@ def render_colored_lines(left_text: str, right_text: str, start_line: int) -> tu
     right_html = '<div class="diffbox">' + "\n".join(right_out) + "</div>"
     return left_html, right_html
 
+
+# ---- ZIP handling for deployment ----
+def extract_bundle_zip(uploaded_zip) -> Path:
+    """
+    Extract uploaded ZIP to a temp folder and return the extraction root Path.
+    """
+    tmp_root = Path(tempfile.gettempdir()) / "verilite_bundle"
+    extract_root = tmp_root / Path(uploaded_zip.name).stem
+
+    # wipe old extract (deterministic)
+    if extract_root.exists():
+        for p in sorted(extract_root.rglob("*"), reverse=True):
+            if p.is_file():
+                p.unlink()
+            else:
+                try:
+                    p.rmdir()
+                except OSError:
+                    pass
+        try:
+            extract_root.rmdir()
+        except OSError:
+            pass
+
+    extract_root.mkdir(parents=True, exist_ok=True)
+
+    zip_path = extract_root / uploaded_zip.name
+    zip_path.write_bytes(uploaded_zip.getvalue())
+
+    with zipfile.ZipFile(zip_path, "r") as z:
+        z.extractall(extract_root)
+
+    return extract_root
+
+
+def resolve_snapshot_from_bundle(bundle_root: Path, snap_path_str: str) -> Optional[Path]:
+    """
+    Given a snapshot path string from the report, map it to a file inside the bundle.
+    Works even if the report contains absolute Windows paths.
+    """
+    if not snap_path_str:
+        return None
+
+    name = Path(snap_path_str).name
+
+    candidates = [
+        bundle_root / "snapshots_baseline" / name,
+        bundle_root / "snapshots_current" / name,
+    ]
+
+    for c in candidates:
+        if c.exists():
+            return c
+
+    hits = list(bundle_root.rglob(name))
+    return hits[0] if hits else None
+
+
 def build_modified_df(report: dict) -> pd.DataFrame:
     rows = []
     for item in report.get("modified", []):
@@ -157,27 +219,48 @@ def build_deleted_df(report: dict) -> pd.DataFrame:
     return pd.DataFrame({"path": report.get("deleted", [])})
 
 
+# ---- App ----
 st.title("VeriLite — Integrity Report Viewer")
 
 st.sidebar.header("Load report")
 
 mode = st.sidebar.radio(
     "Choose input method",
-    ["Upload report", "Browse folder", "Paste path"],
+    ["Upload bundle (.zip)", "Upload report", "Browse folder", "Paste path"],
     index=0
 )
 
-report_file = None
+report_file: Optional[Path] = None
+bundle_root: Optional[Path] = None
 
-if mode == "Upload report":
+if mode == "Upload bundle (.zip)":
+    uploaded_zip = st.sidebar.file_uploader(
+        "Upload VeriLite bundle (.zip)",
+        type=["zip"],
+        accept_multiple_files=False
+    )
+    if uploaded_zip is not None:
+        bundle_root = extract_bundle_zip(uploaded_zip)
+
+        reports = sorted(bundle_root.rglob("*.report.json"))
+        if not reports:
+            st.sidebar.error("No *.report.json found inside the ZIP.")
+        else:
+            chosen = st.sidebar.selectbox(
+                "Select report inside bundle",
+                options=[str(p.relative_to(bundle_root)) for p in reports],
+                index=0
+            )
+            report_file = bundle_root / chosen
+            st.sidebar.success(f"Loaded bundle: {uploaded_zip.name}")
+
+elif mode == "Upload report":
     uploaded = st.sidebar.file_uploader(
         "Upload *.report.json",
         type=["json"],
         accept_multiple_files=False
     )
-
     if uploaded is not None:
-        #save upload to a temp file so the rest of the app can treat it like a normal Path
         tmp_dir = Path(tempfile.gettempdir()) / "verilite_reports"
         tmp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -185,7 +268,6 @@ if mode == "Upload report":
         tmp_path.write_bytes(uploaded.getvalue())
 
         report_file = tmp_path
-
         st.sidebar.success(f"Loaded: {uploaded.name}")
 
 elif mode == "Browse folder":
@@ -209,7 +291,7 @@ elif mode == "Browse folder":
     else:
         st.sidebar.warning("Folder not found.")
 
-else:  #paste path
+else:  # Paste path
     report_path_str = st.sidebar.text_input(
         "Report path (.report.json)",
         value=""
@@ -222,7 +304,7 @@ else:  #paste path
         else:
             st.sidebar.error("That file path doesn't exist.")
 
-#stop if nothing selected
+# stop if nothing selected
 if report_file is None:
     st.info("Load a report using the sidebar to begin.")
     st.stop()
@@ -232,7 +314,7 @@ if report.get("schema_version") != 1 or "modified" not in report:
     st.error("That JSON doesn't look like a VeriLite report.")
     st.stop()
 
-#header info
+# header info
 colA, colB, colC, colD = st.columns(4)
 with colA:
     st.metric("Modified", report.get("summary", {}).get("modified", 0))
@@ -250,17 +332,16 @@ with st.expander("Run details", expanded=False):
     st.write(f"**Baseline:** {report.get('baseline_path')}")
     st.write(f"**Report file:** {str(report_file)}")
 
-#tabs
+# tabs
 tab_mod, tab_added, tab_deleted = st.tabs(["Modified", "Added", "Deleted"])
 
-#----MODIFIED FILES----
+# ---- MODIFIED FILES ----
 with tab_mod:
     df_mod = build_modified_df(report)
     if df_mod.empty:
         st.success("No modified files in this report.")
         st.stop()
 
-    #filters
     st.subheader("Modified files")
     q = st.text_input("Filter by path contains", value="").strip().lower()
 
@@ -270,7 +351,6 @@ with tab_mod:
 
     st.dataframe(df_show, use_container_width=True, hide_index=True)
 
-    #pick one file to inspect
     paths = df_show["path"].tolist()
     if not paths:
         st.warning("No files match your filter.")
@@ -278,7 +358,6 @@ with tab_mod:
 
     chosen = st.selectbox("Select a file to inspect", options=paths, index=0)
 
-    #find full record
     chosen_rec = None
     for item in report.get("modified", []):
         if item.get("path") == chosen:
@@ -319,7 +398,6 @@ with tab_mod:
         "tamper_ratio": ci.get("tamper_ratio"),
     })
 
-    #snapshot paths
     base_snap = chosen_rec.get("baseline_snapshot_path")
     curr_snap = chosen_rec.get("current_snapshot_path")
 
@@ -330,8 +408,17 @@ with tab_mod:
         )
         st.stop()
 
-    base_path = Path(base_snap)
-    curr_path = Path(curr_snap)
+    # Resolve snapshot paths (bundle upload vs local paths)
+    if bundle_root is not None:
+        base_path = resolve_snapshot_from_bundle(bundle_root, base_snap)
+        curr_path = resolve_snapshot_from_bundle(bundle_root, curr_snap)
+    else:
+        base_path = Path(base_snap)
+        curr_path = Path(curr_snap)
+
+    if base_path is None or curr_path is None:
+        st.error("Could not resolve snapshot paths from the uploaded bundle.")
+        st.stop()
 
     if not base_path.exists() or not curr_path.exists():
         st.error(
@@ -347,7 +434,6 @@ with tab_mod:
     base_chunks = split_into_chunks(base_text, max_lines=max_lines)
     curr_chunks = split_into_chunks(curr_text, max_lines=max_lines)
 
-    #choose which chunk to view
     if changed_indices:
         default_chunk = changed_indices[0]
     else:
@@ -355,7 +441,6 @@ with tab_mod:
 
     all_indices = sorted(set(changed_indices + added_indices + removed_indices))
     if not all_indices:
-        #fallback: allow user to browse chunk 0..N-1
         n = max(len(base_chunks), len(curr_chunks))
         all_indices = list(range(n))
 
@@ -370,11 +455,9 @@ with tab_mod:
 
     left, right = st.columns(2)
 
-    #define the chunk text for each side
     base_chunk = base_chunks[chosen_chunk] if chosen_chunk < len(base_chunks) else ""
     curr_chunk = curr_chunks[chosen_chunk] if chosen_chunk < len(curr_chunks) else ""
 
-    #render coloured HTML
     left_html, right_html = render_colored_lines(base_chunk, curr_chunk, start_line)
 
     st.markdown(
@@ -389,8 +472,8 @@ with tab_mod:
     with right:
         st.write("**Current snapshot chunk**")
         st.markdown(right_html, unsafe_allow_html=True)
-        
-#----ADDED FILES----
+
+# ---- ADDED FILES ----
 with tab_added:
     df_added = build_added_df(report)
     st.subheader("Added files")
@@ -399,7 +482,7 @@ with tab_added:
     else:
         st.dataframe(df_added, use_container_width=True, hide_index=True)
 
-#----DELETED FILES----
+# ---- DELETED FILES ----
 with tab_deleted:
     df_deleted = build_deleted_df(report)
     st.subheader("Deleted files")
