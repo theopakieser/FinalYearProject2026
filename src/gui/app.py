@@ -2,7 +2,7 @@ import json
 import html
 import tempfile
 import zipfile
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from typing import Optional
 
 import pandas as pd
@@ -95,7 +95,6 @@ def read_text_file(path: Path) -> str:
 
 
 def split_into_chunks(text: str, max_lines: int) -> list[str]:
-    # splitlines(), then join in groups of max_lines, strip each chunk
     lines = text.splitlines()
     chunks = []
     for i in range(0, len(lines), max_lines):
@@ -171,30 +170,27 @@ def extract_bundle_zip(uploaded_zip) -> Path:
     with zipfile.ZipFile(zip_path, "r") as z:
         z.extractall(extract_root)
 
+    # If the zip contains exactly one top-level directory, treat that as the bundle root
+    top_dirs = [p for p in extract_root.iterdir() if p.is_dir()]
+    if len(top_dirs) == 1:
+        return top_dirs[0]
+
     return extract_root
 
 
-def resolve_snapshot_from_bundle(bundle_root: Path, snap_path_str: str):
-    if not snap_path_str:
-        return None
+def find_snapshots_dir(bundle_root: Path, name: str) -> Optional[Path]:
+    """
+    Find a directory called `name` anywhere under bundle_root.
+    """
+    direct = bundle_root / name
+    if direct.exists() and direct.is_dir():
+        return direct
 
-    # ff it's a Windows path, parse it correctly on Linux
-    if "\\" in snap_path_str:
-        name = PureWindowsPath(snap_path_str).name
-    else:
-        name = Path(snap_path_str).name
+    for p in bundle_root.rglob(name):
+        if p.is_dir() and p.name == name:
+            return p
 
-    # first try the expected bundle layout
-    for folder in ["snapshots_baseline", "snapshots_current"]:
-        root = bundle_root / folder
-        if root.exists():
-            hits = list(root.rglob(name))  #recursive (supports nested)
-            if hits:
-                return hits[0]
-
-    #fallback: search anywhere in bundle
-    hits = list(bundle_root.rglob(name))
-    return hits[0] if hits else None
+    return None
 
 
 def build_modified_df(report: dict) -> pd.DataFrame:
@@ -408,41 +404,32 @@ with tab_mod:
         )
         st.stop()
 
-# resolve snapshot paths (bundle upload vs local paths)
-if bundle_root is not None:
-    base_rel = chosen_rec.get("baseline_snapshot_rel")
-    curr_rel = chosen_rec.get("current_snapshot_rel")
+    # Resolve snapshot paths (bundle upload vs local paths)
+    if bundle_root is not None:
+        base_rel = chosen_rec.get("baseline_snapshot_rel")
+        curr_rel = chosen_rec.get("current_snapshot_rel")
 
-    if not base_rel or not curr_rel:
-        st.error("This report bundle is missing snapshot relative paths (baseline_snapshot_rel/current_snapshot_rel). Re-run verify and re-zip.")
-        st.stop()
+        if not base_rel or not curr_rel:
+            st.error(
+                "This report bundle is missing snapshot relative paths "
+                "(baseline_snapshot_rel/current_snapshot_rel). Re-run verify and re-zip."
+            )
+            st.stop()
 
-    baseline_dir = bundle_root / "snapshots_baseline"
-    current_dir = bundle_root / "snapshots_current"
+        baseline_dir = find_snapshots_dir(bundle_root, "snapshots_baseline")
+        current_dir = find_snapshots_dir(bundle_root, "snapshots_current")
 
-    # handle bundles where folders are nested
-    if not baseline_dir.exists():
-        hits = [p for p in bundle_root.rglob("snapshots_baseline") if p.is_dir()]
-        baseline_dir = hits[0] if hits else None
+        if baseline_dir is None or current_dir is None:
+            st.error("Could not find snapshots_baseline/ and snapshots_current/ inside the uploaded ZIP.")
+            st.stop()
 
-    if not current_dir.exists():
-        hits = [p for p in bundle_root.rglob("snapshots_current") if p.is_dir()]
-        current_dir = hits[0] if hits else None
+        base_path = baseline_dir / base_rel
+        curr_path = current_dir / curr_rel
+    else:
+        base_path = Path(base_snap)
+        curr_path = Path(curr_snap)
 
-    if baseline_dir is None or current_dir is None:
-        st.error("Could not find snapshots_baseline/ and snapshots_current/ inside the uploaded ZIP.")
-        st.stop()
-
-    base_path = baseline_dir / base_rel
-    curr_path = current_dir / curr_rel
-else:
-    base_path = Path(base_snap)
-    curr_path = Path(curr_snap)
-
-    if base_path is None or curr_path is None:
-        st.error("Could not resolve snapshot paths from the uploaded bundle.")
-        st.stop()
-
+    # From here down, run for BOTH modes
     if not base_path.exists() or not curr_path.exists():
         st.error(
             "Snapshot file(s) not found.\n\n"
@@ -457,10 +444,7 @@ else:
     base_chunks = split_into_chunks(base_text, max_lines=max_lines)
     curr_chunks = split_into_chunks(curr_text, max_lines=max_lines)
 
-    if changed_indices:
-        default_chunk = changed_indices[0]
-    else:
-        default_chunk = 0
+    default_chunk = changed_indices[0] if changed_indices else 0
 
     all_indices = sorted(set(changed_indices + added_indices + removed_indices))
     if not all_indices:
