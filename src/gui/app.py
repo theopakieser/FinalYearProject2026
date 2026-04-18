@@ -408,13 +408,36 @@ with tab_mod:
         )
         st.stop()
 
-    # Resolve snapshot paths (bundle upload vs local paths)
-    if bundle_root is not None:
-        base_path = resolve_snapshot_from_bundle(bundle_root, base_snap)
-        curr_path = resolve_snapshot_from_bundle(bundle_root, curr_snap)
-    else:
-        base_path = Path(base_snap)
-        curr_path = Path(curr_snap)
+# resolve snapshot paths (bundle upload vs local paths)
+if bundle_root is not None:
+    base_rel = chosen_rec.get("baseline_snapshot_rel")
+    curr_rel = chosen_rec.get("current_snapshot_rel")
+
+    if not base_rel or not curr_rel:
+        st.error("This report bundle is missing snapshot relative paths (baseline_snapshot_rel/current_snapshot_rel). Re-run verify and re-zip.")
+        st.stop()
+
+    baseline_dir = bundle_root / "snapshots_baseline"
+    current_dir = bundle_root / "snapshots_current"
+
+    # handle bundles where folders are nested
+    if not baseline_dir.exists():
+        hits = [p for p in bundle_root.rglob("snapshots_baseline") if p.is_dir()]
+        baseline_dir = hits[0] if hits else None
+
+    if not current_dir.exists():
+        hits = [p for p in bundle_root.rglob("snapshots_current") if p.is_dir()]
+        current_dir = hits[0] if hits else None
+
+    if baseline_dir is None or current_dir is None:
+        st.error("Could not find snapshots_baseline/ and snapshots_current/ inside the uploaded ZIP.")
+        st.stop()
+
+    base_path = baseline_dir / base_rel
+    curr_path = current_dir / curr_rel
+else:
+    base_path = Path(base_snap)
+    curr_path = Path(curr_snap)
 
     if base_path is None or curr_path is None:
         st.error("Could not resolve snapshot paths from the uploaded bundle.")
