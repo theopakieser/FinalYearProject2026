@@ -20,6 +20,12 @@ with col2:
 
     st.link_button("Open repository", source_url)
 
+
+    demo_url = "https://youtu.be/H9K_7kS9NXc"
+    st.markdown(f"**Demo Video:** {demo_url}")
+
+    st.link_button("Watch Demo", demo_url)
+
 st.divider()
 
 st.markdown(
